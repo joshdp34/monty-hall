@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+const base='http://127.0.0.1:8787/api/sessions',id=crypto.randomUUID(),token=crypto.randomUUID();
+async function post(body){const res=await fetch(base,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({id,...body})});return {status:res.status,data:await res.json()}}
+const initial=await(await fetch(base)).json();assert.equal(initial.sessions.filter(s=>s.source==='historical').length,25);
+const create={action:'create',name:'API verification',startingPoints:5,pointsForWin:10,pointsForLoss:20,mutationId:crypto.randomUUID()};
+let a=await post(create);assert.equal(a.status,200);assert.equal(a.data.session.finalPoints,5);assert.equal(a.data.round.prize,undefined);assert.equal((await post(create)).data.session.id,id);
+a=await post({action:'choose',door:0,version:a.data.version,mutationId:crypto.randomUUID()});assert.equal(a.data.round.prize,undefined);assert.notEqual(a.data.round.opened,0);
+const decision={action:'switch',version:a.data.version,mutationId:crypto.randomUUID()};a=await post(decision);assert.equal(a.status,200);const retry=await post(decision);assert.deepEqual(retry.data,a.data);assert.equal(a.data.session.switchWin+a.data.session.switchLoss,1);
+const unauthorized=await fetch(base+'?id='+id,{headers:{Authorization:'Bearer '+crypto.randomUUID()}});assert.equal(unauthorized.status,404);
+const race={action:'next',version:a.data.version,mutationId:crypto.randomUUID()};const races=await Promise.all([post(race),post({...race,mutationId:crypto.randomUUID()})]);assert.equal(races.filter(r=>r.status===200).length,1);assert.equal(races.filter(r=>r.status===409).length,1);
+const current=await(await fetch(base+'?id='+id,{headers:{Authorization:'Bearer '+token}})).json();a=await post({action:'end',version:current.version,mutationId:crypto.randomUUID()});assert.equal(a.data.session.status,'ended');assert.equal(a.data.session.switchWin+a.data.session.switchLoss,1);
+const exported=await(await fetch(base)).json();const publicRecord=exported.sessions.find(s=>s.id===id);assert.equal(publicRecord.status,'ended');assert.equal(JSON.stringify(exported).includes(token),false);assert.equal((await fetch(base,{method:'OPTIONS'})).headers.get('access-control-allow-origin'),'*');console.log('PASS: shared persistence, hidden prize, retry idempotency, authorization, concurrent actions, unfinished end, public JSON, and CORS.');

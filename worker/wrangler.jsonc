@@ -1,0 +1,14 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "monty-hall-api",
+  "main": "index.ts",
+  "compatibility_date": "2026-05-22",
+  "workers_dev": true,
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "monty-hall",
+    "database_id": "3d011cfc-6fff-4bfc-b76d-37ad10a0f3b0",
+    "migrations_dir": "migrations"
+  }]
+}
+

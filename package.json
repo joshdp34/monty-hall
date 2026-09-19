@@ -13,7 +13,10 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "build:pages": "vite build --config vite.pages.config.ts",
-    "test": "node --test tests/game.test.mjs"
+    "test": "node --test tests/game.test.mjs",
+    "dev:api": "wrangler dev --config worker/wrangler.jsonc",
+    "deploy:api": "wrangler deploy --config worker/wrangler.jsonc",
+    "db:migrate": "wrangler d1 migrations apply monty-hall --config worker/wrangler.jsonc --remote"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
